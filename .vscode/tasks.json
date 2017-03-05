@@ -1,9 +1,15 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
     "version": "0.1.0",
-    "command": "python",
-    "isShellCommand": true,
-    "args": ["${file}"],
-    "showOutput": "always"
+    "_runner": "terminal",
+    "tasks": [
+        {
+            "taskName": "python",
+            "command": "C:\\ProgramData\\Anaconda3\\python.exe",
+            "isShellCommand": true,
+            //"isBackground": true,
+            "args": ["${file}"],
+            "isBuildCommand": true,
+            "showOutput": "always"
+        }
+    ]
 }
