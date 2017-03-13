@@ -10,6 +10,7 @@ def step_function(x):
 
 #MLP
 def sigmoid(x):
+    c = np.max(x)
     return 1/(1+np.exp(-x))
 
 def relu(x):
@@ -21,13 +22,13 @@ def softmax(x):
 
 def graph():
     x = np.arange(-10, 10, 0.1)
-    y = relu(x)
+    y = sigmoid(x)
     plt.plot(x, y)
     plt.show()
 
 
 
 if __name__ == '__main__':
-    #graph()
-    x = np.array([1010, 1000, 990])
-    print(softmax(x))
+    graph()
+    #x = np.array([1010, 1000, 990])
+    #print(softmax(x))
