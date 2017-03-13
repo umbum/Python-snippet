@@ -45,6 +45,12 @@ class BumThread(threading.Thread):
         threading.Thread.__init__(self)
         self.msg=msg
         self.daemon = True
+    def run(self):
+        while True:
+            time.sleep(1)
+            print(self.msg)
+
+
 def say(msg):
     for i in range(2):
         time.sleep(1)
@@ -53,5 +59,9 @@ def say(msg):
 for msg in ['THREAD1', 'THREAD2', 'THREAD3']:
     t = threading.Thread(target=say, args=(msg, ))
     t.start()
+
+
+t = UserThread(msg)
+t.start()
 
 
