@@ -1,6 +1,7 @@
 import numpy as np
 
-from ActivationFunc import *
+sys.path.append(os.getcwd()+"\DLfromScratch")
+from functions import *
 
 
 def init_network():

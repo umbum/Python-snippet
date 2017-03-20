@@ -9,10 +9,11 @@ import pickle
 
 from functions import *
 
-def get_data():
-    (x_train, t_train), (x_test, t_test) = load_mnist(flatten=True, normalize=False)
+def get_train_data():
+    (x_train, t_train), (x_test, t_test) = \
+    load_mnist(flatten=True, one_hot_label=True)
 
-    return x_test, t_test
+    return x_train, t_train
 
 
 def init_network():
@@ -34,23 +35,24 @@ def predict(network, x):
 
     return y
 
+def get_mini_batch(x, t):
+    data_size = x.shape[0]
+    batch_size = 10
+    batch_mask = np.random.choice(data_size, batch_size)
+
+    return x[batch_mask], t[batch_mask]
+
 
 def _main():
-    x, t = get_data()
+    x_train, t_train = get_train_data()
+    x_batch, t_batch = get_mini_batch(x_train, t_train)
     network = init_network()
 
-    accuracy_cnt = 0
-    batch_size = 1000   
-    start = time.time()
-    for i in range(0, len(x), batch_size):
-        x_batch = x[i:i+batch_size]
-        y_batch = predict(network, x_batch)
-        p = np.argmax(y_batch, axis=1)
-        accuracy_cnt += np.sum(p == t[i:i+batch_size])
-
-    print("Accuracy:" + str(float(accuracy_cnt) /len(x)))
-    end = time.time() - start
-    print("TIME:"+str(end))
+    y_batch = predict(network, x_batch)
+    print(y_batch[0])
+    print(y_batch[0, 3])
+    print(y_batch[0][3])
+    #print(cee(y_batch, t_batch))
 
 if __name__=='__main__':
     _main()
