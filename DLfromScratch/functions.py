@@ -11,7 +11,6 @@ def step_function(x):
 
 #MLP
 def sigmoid(x):
-    c = np.max(x)
     return 1/(1+np.exp(-x))
 
 def relu(x):
@@ -85,17 +84,17 @@ def function_2(x):
 
 def graph():
     x = np.arange(0, 20, 0.1)
-    y1 = function_1(x)
-    y2 = tangent_line(function_1, x, 5)
+    y1 = softmax(x)
+    #y2 = tangent_line(function_1, x, 5)
     plt.plot(x, y1)
-    plt.plot(x, y2)
+    #plt.plot(x, y2)
     plt.show()
 
 
 
 if __name__ == '__main__':
-    #graph()
+    graph()
     #x = np.array([1010, 1000, 990])
     #print(np.sum(softmax(x)))
     
-    print(gradient_descent(function_2, np.array([3.0, 4.0]), lr=0.1))
+    #print(gradient_descent(function_2, np.array([3.0, 4.0]), lr=0.1))
