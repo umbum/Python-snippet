@@ -1,4 +1,5 @@
 import sys, os
+from collections import OrderedDict
 
 import numpy as np
 sys.path.append(os.getcwd()+"\DLfromScratch")
@@ -15,13 +16,13 @@ class TwoLayerNet():
         np.random.randn(hidden_size, output_size)
         self.params['b2'] = np.zeros(output_size)
         
-        self.layers = {}
+        self.layers = OrderedDict()
         self.layers['Affine1'] = Affine(self.params['W1'], self.params['b1'])
         self.layers['ReLU1'] = ReLU()
         self.layers['Affine2'] = Affine(self.params['W2'], self.params['b2'])
         
         self.lastLayer = SoftmaxWithLoss()
-
+    
     def predict(self, x):
         for layer in self.layers.values():
             x = layer.forward(x)
@@ -30,7 +31,6 @@ class TwoLayerNet():
 
     def loss(self, x, t):
         y = self.predict(x)
-
         return self.lastLayer.forward(y, t)
 
     def accuracy(self, x, t):
@@ -39,32 +39,47 @@ class TwoLayerNet():
         if t.ndim != 1:
             t = np.argmax(t, axis=1)
         
-        return np.sum(y==t) / x.shape[0]
+        return np.sum(y==t) / float(x.shape[0])
+
+
+    def n_gradient(self, x, t):
+        loss_W = lambda W: self.loss(x, t)
+
+        g = {}
+        for key in self.params:
+            print("before g "+key + ": ", end="")
+            g[key] = numerical_gradient(loss_W, self.params[key])
+
+        return g
 
     def gradient(self, x, t):
-        self.loss(x, t)
+        lossValue = self.loss(x, t)
 
         dout = self.lastLayer.backward(1)
-        
-        relayers = list(self.layers.values).reverse()
 
-        for layer in relayers:
-            dout = layer.backward(dout)
-        
-        g = {}
-        g['W1'] = self.layers['Affine1'].dW
+        relayersKey = reversed(self.layers)
+        for key in relayersKey:
+            dout = self.layers[key].backward(dout)
 
-        
+
+        grads = {}
+        grads['W1'] = self.layers['Affine1'].dW
+        grads['b1'] = self.layers['Affine1'].db
+        grads['W2'] = self.layers['Affine2'].dW
+        grads['b2'] = self.layers['Affine2'].db
+
+        return grads, lossValue
 
 
 
 if __name__=="__main__":
 
-    dic = {}
+    dic = OrderedDict()
     dic['a'] = 1
     dic['b'] = 2
-    li = list(dic.values())
+    re = reversed(dic)
     
-    for i in li:
+    print(list(re))
+    for i in re:
         print(i)
 

@@ -15,9 +15,9 @@ def _main():
     train_loss_list = []
 
     #Hyper Parameters
-    iters_num =1000
+    iters_num =1
     train_size = x_train.shape[0]
-    batch_size = 20
+    batch_size = 1
     lr = 0.1
     network = TwoLayerNet(input_size=784, hidden_size=10, output_size=10)
 
@@ -44,8 +44,8 @@ def _main():
 
 if __name__ == "__main__":
     y = _main()
-    print(y[-1])
-    x = np.arange(0, 1000, 1)
+    #print(y[-1])
+    #x = np.arange(0, 1000, 1)
     
-    plt.plot(x, y)
-    plt.show()
+    #plt.plot(x, y)
+    #plt.show()

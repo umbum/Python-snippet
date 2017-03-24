@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+import cProfile
 
 def identity_function(x):
     return x
@@ -17,8 +17,27 @@ def relu(x):
     return np.maximum(0, x)
 
 def softmax(x):
-    c = np.max(x)
-    return np.exp(x-c)/np.sum(np.exp(x-c))
+    if x.ndim==2:
+        x = x.T
+        x = x - np.max(x, axis=0)
+        y = np.exp(x) / np.sum(np.exp(x), axis=0)
+        return y.T
+    
+    x = x - np.max(x)
+    return np.exp(x) / np.sum(np.exp(x))
+
+
+def softmax2(x):
+    if x.ndim == 1:
+        x = x.reshape(1, x.size)
+
+    out = np.zeros_like(x, float)
+
+    for i in range(x.shape[0]):
+        x[i] = x[i] - np.max(x[i])    
+        out[i] = np.exp(x[i])/np.sum(np.exp(x[i]))
+
+    return out
 
 #loss function
 def mse(y, t):
@@ -28,14 +47,13 @@ def mse(y, t):
     return 0.5*np.sum((y-t)**2)/y.shape[0]
 
 def cee(y, t):
-    delta = 1e-7
     if y.ndim == 1:
         y = y.reshape(1, y.size)
         t = t.reshape(1, t.size)
 
     if t.size == y.size:
         t = t.argmax(axis=1)
-    return -np.sum(t*np.log(y[np.arange(y.shape[0]), t]))/y.shape[0]
+    return -np.sum(np.log(y[np.arange(y.shape[0]), t]))/y.shape[0]
 
 #differential
 def numerical_diff(f, x):
@@ -58,9 +76,10 @@ def numerical_gradient(f, x):
         tmp_val = x[idx]
         x[idx] = float(tmp_val) + h
         fxh1 = f(x) # f(x+h)
-        
+
         x[idx] = tmp_val - h 
         fxh2 = f(x) # f(x-h)
+
         grad[idx] = (fxh1 - fxh2) / (2*h)
         
         x[idx] = tmp_val #restore
@@ -75,10 +94,10 @@ def gradient_descent(f, init_x, lr=0.01, step_num=100):
         x -= lr * g
     return x
 
-def function_1(x):
+def function1(x):
     return 0.1*x**2 + 1*x
 
-def function_2(x):
+def function2(x):
     return x[0]**2 + x[1]**2
 
 
@@ -93,8 +112,14 @@ def graph():
 
 
 if __name__ == '__main__':
-    graph()
-    #x = np.array([1010, 1000, 990])
-    #print(np.sum(softmax(x)))
-    
+    #graph()
     #print(gradient_descent(function_2, np.array([3.0, 4.0]), lr=0.1))
+
+    x = np.array([[1010, 1000, 1], [12, 3, 44]])
+    t = np.array([[1, 0, 0], [0, 1, 0]])
+    #print(x.shape[0])
+    #print(softmax(x.copy()))
+    #print(softmax2(x))
+
+    
+    
