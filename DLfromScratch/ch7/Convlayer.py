@@ -30,6 +30,7 @@ class Convolution:
         return result
 
 if __name__=="__main__":
+    '''
     x1 = np.random.rand(1, 3, 7, 7)
     col1 = im2col(x1, 5, 5, stride=1, pad=0)
     print(col1.shape)
@@ -37,3 +38,17 @@ if __name__=="__main__":
     x2 = np.random.rand(10, 3, 7, 7)
     col2 = im2col(x2, 5, 5, stride=1, pad=0)
     print(col2.shape)
+    '''
+    x = np.zeros((1, 2, 2, 2))
+    x = np.array([[[[1.1, 1.2], [1.3, 1.4]], [[2.1, 2.2], [2.3, 2.4]]]])
+    print(x)
+    col_x = im2col(x, 2, 1)
+    print(col_x)
+    col = col_x.reshape(-1, 2*1)
+    print(col)
+    out = np.max(col, axis=1)
+    print(out)
+    out = out.reshape(1, 1, 2, 2)
+    print(out)
+    out = out.transpose(0, 3, 1, 2)
+    print(out)
