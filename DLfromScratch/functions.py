@@ -112,14 +112,11 @@ def graph():
 
 
 if __name__ == '__main__':
-    #graph()
+    graph()
     #print(gradient_descent(function_2, np.array([3.0, 4.0]), lr=0.1))
 
-    x = np.array([[1010, 1000, 1], [12, 3, 44]])
-    t = np.array([[1, 0, 0], [0, 1, 0]])
-    #print(x.shape[0])
-    #print(softmax(x.copy()))
-    #print(softmax2(x))
+
+
 
     
     

@@ -6,7 +6,7 @@
 '''
 import numpy as np
 
-from functions import *
+#from functions import *
 
 class MulLayer:
     def __init__(self):
@@ -128,11 +128,10 @@ def apple():
     print(dapple_cost, dapple_num, dtax)
 
 if __name__ == "__main__":
-    x = np.array([6, 3, -1, -3, 6, -7, 10])
-    t = np.array([0, 0, 0, 0, 0, 0, 1])
-    s = SoftmaxWithLoss()
-    print(s.forward(x,t))
-    print(s.backward(1))
-
-
-
+    x = np.array([1, 3, 5, 7, 9])
+    #t = np.array([0, 0, 0, 0, 0, 0, 1])
+    #s = SoftmaxWithLoss()
+    #print(s.forward(x,t))
+    #print(s.backward(1))
+    s = Sigmoid()
+    print(s.forward(x))

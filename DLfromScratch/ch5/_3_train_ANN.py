@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 sys.path.append(os.getcwd()+"\DLfromScratch")
 from dataset.mnist import load_mnist
 from _1_two_layer_net import TwoLayerNet
+from optimizer import *
 
 def _main():
     (x_train, t_train), (x_test, t_test) = \
@@ -13,10 +14,10 @@ def _main():
 
     net = TwoLayerNet(input_size=784, hidden_size=50, output_size=10)
 
-    iters_num = 1
+    iters_num = 6001
     batch_size = 100
     train_size = x_train.shape[0]
-    lr = 0.1
+    optimizer = SGD(lr=0.1)
 
     train_loss_list = []
     train_acc_list = []
@@ -31,8 +32,7 @@ def _main():
 
         grads, loss = net.gradient(x_batch, t_batch)
 
-        for key in net.params:
-            net.params[key] -= lr * grads[key]
+        optimizer.update(net.params, grads)
 
         train_loss_list.append(loss)
 
@@ -50,8 +50,7 @@ def _main():
     return train_loss_list, train_acc_list, test_acc_list
 
 if __name__ == "__main__":
-    _main()
-    '''
+
     train_loss_list, train_acc_list, test_acc_list = _main()
     
     x = np.arange(0, len(train_loss_list), 1)
@@ -66,5 +65,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    '''
 
