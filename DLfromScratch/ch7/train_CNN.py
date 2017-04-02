@@ -13,18 +13,23 @@ def _main():
     (x_train, t_train), (x_test, t_test) = \
     load_mnist(flatten=False)
 
+    x_train, t_train = x_train[:5000], t_train[:5000]
+    x_test, t_test = x_test[:1000], t_test[:1000]
+
     net = SimpleConvNet()
 
-    iters_num = 6001
+    epochs = 10
     batch_size = 100
     train_size = x_train.shape[0]
     optimizer = Adam(lr=0.01)
+    current_epochs = 0
 
     train_loss_list = []
     train_acc_list = []
     test_acc_list = []
 
     iter_per_epoch = max(train_size / batch_size, 1)
+    iters_num = int(epochs * iter_per_epoch)+1
 
     for i in range(iters_num):
         batch_mask = np.random.choice(train_size, batch_size)
@@ -35,16 +40,18 @@ def _main():
 
         optimizer.update(net.params, grads)
 
+        print("train loss : ", loss)
         train_loss_list.append(loss)
 
         if i % iter_per_epoch == 0:
+            current_epochs +=1
             train_acc = net.accuracy(x_train, t_train)
             test_acc = net.accuracy(x_test, t_test)
             
             train_acc_list.append(train_acc)
             test_acc_list.append(test_acc)
             
-            print(i, "th iter")
+            print(current_epochs, "th epochs======")
             print("train_acc : ", train_acc)
             print("test_acc : ", test_acc)
     
@@ -65,5 +72,4 @@ if __name__ == "__main__":
     
     plt.legend()
     plt.show()
-
-
+    

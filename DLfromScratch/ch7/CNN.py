@@ -27,9 +27,13 @@ class SimpleConvNet:
         self.params['W1'] = weight_init_std * \
         np.random.randn(FN, C, FHW, FHW)
         '''??? 왜 ((FN, 1, 1))을 넣으면 안되는거지? 모양이 다른건 알겠는데
-        이렇게 넣으면 Conv1에서가 아니라 Pool1에서 MemoryError가 발생하는데?
+        2차원 행렬로 전개한 상태에서 b를 더하게 되는데, (N*OH*OW, FN) + (FN, 1, 1)을 더하게 되니까
+        브로드캐스트가 이상하게 적용되어 오류가 발생.
+        그래서 ((FN, 1, 1))을 사용하려면 4차원으로 reshape한 다음 b를 더해줘야 하며
+        grads['b1'] = self.layers['Conv1'].db 에서 grads['b1']을 (FN, 1, 1)로 reshape해줘야
+        optimizer.update()에서 에러가 발생하지 않는다.
         '''
-        self.params['b1'] = np.zeros((FN, 1, 1))
+        self.params['b1'] = np.zeros(FN)
         self.params['W2'] = weight_init_std * \
         np.random.randn(pool_output_cube, hidden_size)
         self.params['b2'] = np.zeros(hidden_size)
@@ -49,9 +53,8 @@ class SimpleConvNet:
         self.lastlayer = SoftmaxWithLoss()
         
     def predict(self, x):
-        for key, layer in self.layers.items():
+        for layer in self.layers.values():
             x = layer.forward(x)
-            print(key + " is completed")
         return x
 
     def loss(self, x, t):
