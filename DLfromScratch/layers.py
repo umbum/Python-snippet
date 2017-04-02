@@ -5,6 +5,7 @@
 역방향 입력 dout
 '''
 import numpy as np
+from common.util import im2col
 
 #from functions import *
 
@@ -107,6 +108,30 @@ class SoftmaxWithLoss:
         n*10일거고, softmax를 통과한 (여기서의)y도 n*10
         t도 n*10이니까 dx도 n*10인데 왜?? 갑자기 batch_size로 나누는거지?
         '''
+        
+ class Convolution:
+    def __init__(self, W, b, stride=1, pad=0):
+        self.W = W
+        self.b = b
+        self.stride = stride
+        self.pad = pad
+
+    def forward(self, x):
+        FN, C, FH, FW = self.W.shape
+        N, C, H, W = x.shape
+
+        OH = int((H + 2*self.pad - FH)/self.stride +1)
+        OW = int((W + 2*self.pad - FW)/self.stride +1)
+
+        col_x = im2col(x, FH, FW, self.stride, self.pad)
+        col_W = self.W.reshape(FN, -1).T
+
+
+        result_2d = np.dot(col_x, col_W) + self.b
+        result = result_2d.reshape(N, OH, OW, FN).transpose(3, 0, 1, 2)
+        
+        return result       
+
 
 def apple():
     apple_cost = 100
