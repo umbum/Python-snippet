@@ -1,0 +1,55 @@
+#coding: utf-8
+import os, sys
+import bs4
+from collections import Iterable
+
+f = open("D:/WSB/#ttt/tsource.html", 'r')
+markupdata = f.read()
+
+soup = bs4.BeautifulSoup(markupdata, "html.parser")
+
+for ul in soup.find_all('ul'):
+    if(ul.get('class') == ['category_list']):
+        category_soup = ul
+
+'''
+#.children / .contents 이용하기
+#짝수는 NavigableString, 홀수는 Tag 이므로 홀수만 얻는다.
+category_list = category_soup.contents[1::2]
+
+#두 번째 Tag ul
+sub_category_list = category_list[0].contents[3].contents[1::2]
+print(sub_category_list[0].contents[1]['href'])
+
+for category in category_list:
+    print(category.contents[1]['href'])
+    for sub_category in sub_category_list:
+        print(sub_category.contents[1]['href'])
+'''
+
+'''
+soup에서 내부에 있는 child Tag(li(a, ul))를 배열로 추출한다.
+그 다음 li도 a, ul로 분해하여 a에서 ['href']에 접근한다.
+
+sub_category도 마찬가지. child Tag(li(a))에 대해 동일한 작업을 한다.
+child list를 얻는 작업이 직관적이지 못하기 때문에(NavigatableString, Tag가 번갈아 가면서 있는 등...) 사용하기가 약간 불편하다.
+'''
+
+#.sibling 사용하기
+category_list =[]
+category = category_soup.li
+while category:
+    category_list.append(category)
+    category = category.next_sibling.next_sibling
+
+sub_category_list = []
+sub_category = category_list[0].ul.li
+while sub_category:
+    sub_category_list.append(sub_category)
+    sub_category = sub_category.next_sibling.next_sibling
+
+for category in category_list:
+    print(category.a['href'])
+    for sub_category in sub_category_list:
+        print(sub_category.a['href'])
+
