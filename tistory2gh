@@ -1,0 +1,304 @@
+#-*- coding: utf-8 -*-
+import os
+import sys
+import formatter
+import http.client #2.7's httplib
+from urllib.parse import *
+from urllib.request import *
+import html.parser #2.7's htmllib
+import io     #2.7's cStringIO
+
+import bs4    #beautifulsoup4
+'''
+bs4는 자체 parser가 아니라 원하는 html parser를 입력하면
+알아서 처리해주는 인터페이스에 가깝다.
+
+bs4.BeautifulSoup(markupcode, "parser")
+형태로 사용하며 parser로는 보통 html.parser, 또는 lxml을 사용하면 된다.
+
+find_all은 자동으로 호출되기 때문에, 다음 두 문장은 동일한 기능을 한다.
+soup.find_all("a")
+soup("a")
+
+각 태그는 dirtionary 형태이므로, a['href'] 또는 a.get('href')로 속성에 접근한다.
+하위 태그는 div.ul.li 같이 .으로 접근하거나, css selector를 사용한다.
+두 경우 모두 후자가 에러에 더 강건하다.
+'''
+
+'''
+페이지 url 파라미터에 +1씩 해가는 방법은 불가능.
+매 페이지 마다 next가 비활성화인지 검사하는 방식으로 처리해야함.
+'''
+
+
+#HTML 파일 하나를 받아 다운로드+ media=True이면 내부 데이터를 받아오는 클래스
+class Retriever():
+    __slots__ = ('url', 'soup')
+    
+    def __init__(self, url):
+        self.url = url
+        self.soup = ''
+    
+    def make_dir(self, path):
+        if not os.path.isdir(path):    #dir이 없거나 파일이 있는경우
+            if os.path.exists(path):   #파일이 있는 경우 unlink
+                os.unlink(path)
+            os.makedirs(path)
+
+        
+    def _download(self, url, path):
+        #Download URL to file
+        try:
+            fname = urlretrieve(url, path)
+        except (IOError, http.client.InvalidURL) as e:
+            fname = (('* ERROR: pad URL "%s": %s' % (url, e)), )
+            print(fname)
+            #형식 맞춰줘야 해서 여기도 투플로.
+        return fname
+
+    def download(self, media):
+        #htmlfile = _download("http://"+self.url, self.url+"/index.html")
+        htmlfile = self.url+"/article.html"
+        with open(htmlfile, 'r', encoding='utf-8') as f:
+            self.soup = bs4.BeautifulSoup(f, "lxml")
+        
+        #html파일 유지 및 media를 html파일 전체에 대해 받아오고 싶은 경우 주석
+        mdfile = self.html2md(htmlfile)
+        
+        if media:
+            self._download_media(mdfile)
+
+    '''
+        리스트에서 None인 항목 제외하는건
+        list comprehension으로 자기자신에서 None인거 빼면서 반복돌려도 되고,
+        아니면, TF를 반환하는 method( tag.has_attr() )를 이용해서 lambda식을 써도 된다.
+    '''
+    #동시에 페이지에 연결된 링크도 src=dpath/item이름으로 변경해야 한다.
+    def _download_media(self, mdfile):
+        #여기서 splitext를 안쓰고 그냥 아예 파일 이름 + .ext가 낫나??
+        dpath = os.path.splitext(mdfile)[0]+"_files/"
+        self.make_dir(dpath)
+        
+        #srcset이 없는 건 타 홈페이지에 걸려있는 img이므로 저장하지 않는다.
+        has_srcset = lambda tag: tag.has_attr('srcset')
+        for img in self.soup(has_srcset):
+            url = img.get('srcset').split(' ')[0]
+            imgName = img.get('filename')
+            url = "http:"+url #앞에 //가 붙어있기 때문에 http:
+            self._download(url, dpath+imgName)
+
+        
+    #div class="article"
+    def html2md(self, htmlfile):
+        self.soup = self.soup.find('div', class_='article')
+        '''
+        decompose()로 필요없는 아래 부분 삭제. 이런 식으로 soup의 일부 객체를 받은 다음
+        그를 decompose()해도 soup와 연결된 객체이기 때문에 soup가 변경된다.
+        '''
+        remove_last = self.soup.find('div', class_="another_category")
+        remove_last.previous_sibling.decompose()
+        remove_last.decompose()
+
+        #여기서 파일에 쓰는걸 media다운로드에 따른 soup수정 다 끝나고 해야겠는데?
+        mdfile = os.path.splitext(htmlfile)[0] + ".md"
+        with open(mdfile, 'w', encoding='utf-8') as f:
+            f.write(str(self.soup))
+
+        #html파일 삭제
+        #os.unlink(htmlfile)
+        
+        return mdfile
+
+        
+#티스토리 정보를 담고있는 클래스
+class Tistory():
+    __slots__ = ('count', 'dom', 'host')
+
+    def __init__(self, url):
+        self.count = 0
+        #user:passwd@host:port/path
+        #netloc = user:passwd@host:port
+        parsed = urlparse(url)
+        self.host = parsed.netloc.split('@')[-1].split(':')[0]
+
+
+    def make_dir(self, path):
+        if not os.path.isdir(path):    #dir이 없거나 파일이 있는경우
+            if os.path.exists(path):   #파일이 있는 경우 unlink
+                os.unlink(path)
+            os.makedirs(path)
+        
+        
+    def get_categorys(self):
+        with open(self.host+"/#back.html", 'r') as f:
+            soup = bs4.BeautifulSoup(f, "lxml")
+
+        '''
+        with urlopen("http://"+self.host) as u:
+            markupdata = u.read()    
+        '''
+
+        #####class같은 속성은 python에서도 사용하는 키워드라서, 마지막에 _를 붙여준다!!!!!!
+        category_soup = soup.find(class_ = "category_list")
+        '''아래는 비효율적인 방법.  위가 더 낫다. 
+        for ul in soup.find_all('ul'):
+            if(ul.get('class') == ['category_list']):
+                category_soup = ul
+        '''
+        
+        
+        ###########.children / .contents을 이용한 방법
+        '''
+        soup에서 내부에 있는 child Tag(li(a, ul))를 배열로 추출한다.
+        그 다음 li도 a, ul로 분해하여 a에서 ['href']에 접근한다.
+        sub_category도 마찬가지. child Tag(li(a))에 대해 동일한 작업을 한다.
+        child list를 얻는 작업이 직관적이지 못하기 때문에(NavigatableString, Tag가 번갈아 가면서 있는 등...) 사용하기가 약간 불편하다.
+        
+        나중에 안 사실인데, 그냥 find_all에서 recursive=False를 주면 굳이 이런 식으로 contents를 사용하지 않아도 된다. find도 recursive 줄 수 있다.
+
+        참고로, 이 방법이나 sibling을 이용한 방법이나 recursive하게 수정할 수 있기 때문에 그렇게 수정할 경우 sub_category 하위에 카테고리가 더 있는 경우 몇개가 있든 잡아낼 수 있다.
+        ###########
+        
+        #짝수는 NavigableString, 홀수는 Tag 이므로 홀수만 얻는다.
+        category_list = category_soup.contents[1::2]
+        
+        #두 번째 Tag ul
+        sub_category_list = category_list[0].contents[3].contents[1::2]
+        print(sub_category_list[0].contents[1]['href'])
+        
+        for category in category_list:
+            print(category.contents[1]['href'])
+            for sub_category in sub_category_list:
+                print(sub_category.contents[1]['href'])
+        '''
+
+        
+        ####category에서는 .next_sibling을 사용했고, sub_category에서는 css selctor를 사용한 방법.
+        '''
+        sub_category에서 css selector를 사용한 이유는 category.ul.li에 접근할 때 ul이 없을 경우 .li에 접근하면서 에러가 나기 때문. css selector는 아예 리스트로 반환하기 때문에 sibling 사용안한다.
+        find_all('a')를 사용하게 되면 나중에 sub_sub_category가 생기면 하위 호환성이 없어지니까 이게 나을 듯.
+        '''
+        category_list =[]
+        category = category_soup.li
+        while category:
+            sub_category_list = [sub_category.a['href'] for sub_category in category.select("ul > li")]
+            category_list.append([category.a['href'], sub_category_list])
+            category = category.next_sibling.next_sibling
+            
+        return category_list
+
+    def get_posts_in_cat(self, category, media=True):
+        with open(self.host+category) as f:
+            soup = bs4.BeautifulSoup(f, "lxml")
+            
+        '''
+        with urlopen("http://"+self.host+category) as u:
+            soup = bs4.BeautifulSoup(u, "lxml")
+        '''        
+        
+        body = soup.find(id="body")
+        post_list = [post['href'] for post in body.find_all('a')]
+        paging = soup.find(id="paging")
+
+        '''
+        for post in post_list:
+            r = Retriever(self.host+post)
+            r.download(media)
+        '''
+        r = Retriever(self.host)
+        r.download(media)
+        
+    '''
+    access category page,
+    parse category page,
+    call retriever (download page, parse page, download inner data)
+    
+    여기서 post를 또 리스트로 만들어서 갖고있다가
+    다시 그걸 이용해서 retriever를 호출하는 것 보다
+    그냥 한번에 해결하는게 나을 것 같다.
+    '''
+    def start(self, media=True, backup=False):
+        self.make_dir(self.host)
+        if backup:
+            r = Retriever("http://"+self.host)
+            r.download(self.host+"/#back.html", media=False)
+
+        category_list = self.get_categorys()
+        for category, sub_category_list in category_list:
+            category = category.replace('.', '#')
+            self.make_dir(self.host+unquote(category))
+            
+
+        '''
+        for category, sub_category_list in category_list:
+        sub_category_list가 없을 때도 처리해야함.
+            for sub_category in sub_category_list:
+                self.get_posts_in_cat(sub_category)
+        '''
+        self.get_posts_in_cat("/body.html", media)
+
+
+                    
+            
+
+        
+        
+
+    #main crawling routine
+    def crawling(self, media=False):
+
+        r = Retriever("http://"+self.host)
+        fname = r.download(self.host+r.path+".html")[0]    #자기 자신 다운먼저하고 있으면 파싱하고 mkdir해야지
+        
+        if fname[0] == '*':
+            print(fname, '...skipping parse')
+            return
+        
+        self.count += 1
+        
+        print('\n(', self.count, ')')
+        print('URL:', url)
+        print('FILE:', fname)
+        
+        
+        ftype = os.path.splitext(fname)[1]
+        if ftype not in ('.htm', '.html'):
+            return
+
+        for link in r.bs_lxml():
+            if not link.startswith('http://'):
+                link = urljoin(url, link)
+                
+            print('*', link)
+            #download해야함.
+            
+
+
+'''
+기존에 코딩하던 방식대로 코딩했으면 queue검사부터 안하고,
+__init__에서 Tistory의 main격 함수를 호출하게 했을 것이다.
+그럼 그냥 _main()에서 Tistory 인스턴스 생성과 동시에 
+'''
+
+
+def _main():
+    #사용자 입력과 KeyboardInterrupt는 이런식으로 처리
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    else:
+        try:
+            url = 'umbum.tistory.com'
+            #url = input('Enter starting URL: (eg.example.com)')
+        except (KeyboardInterrupt, EOFError):
+            return
+
+    if not url.startswith("http://"):
+        url = "http://%s/" % url
+    
+    robot = Tistory(url)
+    #robot.backup_html()
+    robot.start(media=True)
+
+if __name__ == '__main__':
+    _main()
+
