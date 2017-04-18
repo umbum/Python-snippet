@@ -30,9 +30,9 @@ systemList['test'] = {
 }
 
 def __main():
-    for sname, sattr in list(systemList.items()):
+    for sname, sattr in systemList.items():
         checker = System_checker(sattr['user'], sattr['pw'], sattr['suPW'], sattr['IP'], sattr['port'])
-        print(sname, end=' ')
+        print sname,
         checker.check()
 
 class System_checker:
@@ -67,7 +67,7 @@ class System_checker:
         while self.channel.recv_ready():
             output += self.channel.recv(1024)
         
-        print(output)
+        print output
 
     def close_session(self):
         self.session.close()
@@ -77,8 +77,8 @@ class System_checker:
             self.open_session()
             self.do_task()
         except Exception as e:
-            print("* Error occurred during check() "+self.IP+". Manual check is needed")
-            print(e)
+            print "* Error occurred during check() "+self.IP+". Manual check is needed"
+            print e
         finally:
             self.close_session()
 
