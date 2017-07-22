@@ -28,9 +28,15 @@ def build_graph():
 class Visualization:
     def get_pos(self, G):
         return nx.circular_layout(G)
-    # nx.nx_agraph.graphviz_layout(G, prog="towpi", root=1) : pygraphviz
-    # nx.nx_pydot.graphviz_layout(G, prog="towpi", root=1)  : pydot 
-    # 함수를 호출하면 자동으로 import된다.
+    '''
+    nx.nx_agraph.graphviz_layout(G, prog="twopi", root=1) : pygraphviz
+    nx.nx_pydot.graphviz_layout(G, prog="twopi", root=1)  : pydot 
+    nx의 graphviz_layout 메소드를 호출하면 자동으로 pygraphviz/pydot가 import되며 실행된다.
+    근데 이거 꽤나 느리다. 호출하면 graphviz\\bin\\twopi.exe가 실행되며 pos값을 temp 파일에 쓰고, 
+    python에서 temp 파일을 읽어와 반환하는 방식이다.
+    파일을 읽어와 반환하는 작업까지 한꺼번에 연결되어 있어 최적화가 불가능하다.
+    데커레이터를 사용하면 가능할 것 같은데 안해봤다.
+    '''
     
     def make_data(self):
         G = build_graph()
@@ -69,7 +75,9 @@ class Visualization:
         
         self.hover_effect(G, node_trace)
         
-        return Data([node_trace, edge_trace])
+        #앞에서 부터 그리기 때문에 edge를 먼저 넘기는게 좋다.
+        #edge를 나중에 그리면 노드 위에 선이 올라와 지저분해진다.
+        return Data([edge_trace, node_trace])
         
     def hover_effect(self, G, node_trace):
         for node in G.nodes():
