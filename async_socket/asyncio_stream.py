@@ -3,7 +3,6 @@ import asyncio
 import socket
 from struct import pack, unpack
 import pprint
-from timeout import timeout
 
 ##########################################
 def u32(x):

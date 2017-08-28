@@ -3,7 +3,7 @@ import asyncio
 import socket
 from struct import pack, unpack
 from pprint import pprint
-from timeout import timeout
+import time
 
 ##########################################
 def u32(x):
@@ -29,6 +29,7 @@ async def recvuntil(self, s, delim):
         offset = res.find(delim)
         if offset != -1:
             return res[:offset+len(delim)]
+
 asyncio.AbstractEventLoop.recvuntil = recvuntil
 
 ###########################################
@@ -74,7 +75,6 @@ async def break_canary(i, x):
     return 0
 
 
-
 async def comain():
     range_pack = [range(0x80), range(0x80, 0x100)]
     for i in range(1, 4):
@@ -91,3 +91,5 @@ if __name__=="__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(comain())
     loop.close()
+    
+    
