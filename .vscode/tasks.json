@@ -4,7 +4,7 @@
     "tasks": [
         {
             "taskName": "python",
-            "command": "C:\\ProgramData\\Anaconda3\\python.exe",
+            "command": "D:\\ProgramData\\Anaconda3\\python.exe",
             "isShellCommand": true,
             //"isBackground": true,
             "args": ["${file}"],
