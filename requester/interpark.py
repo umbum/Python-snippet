@@ -8,7 +8,7 @@ HEADERS = {
 
 def request():
     r = requests.get(f"{HOST}", headers=HEADERS)
-    print(f"{r.content}")
+    print(f"{r.text}")
 
 if __name__ == '__main__':
     request()
